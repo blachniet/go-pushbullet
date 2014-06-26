@@ -22,6 +22,10 @@ import (
 
 const HOST = "https://api.pushbullet.com/api"
 
+// allDevicesId is an invalid device identifer used internally to indicate when
+// we want to push to all of the user's devices
+const allDevicesId = 0
+
 // A Client connects to PushBullet with an API Key.
 type Client struct {
 	Key    string
@@ -103,7 +107,9 @@ func (c *Client) Devices() ([]*Device, error) {
 
 // Push pushes the data to a specific device registered with PushBullet.
 func (c *Client) Push(deviceId int, data url.Values) error {
-	data.Set("device_id", strconv.Itoa(deviceId))
+	if deviceId != allDevicesId {
+		data.Set("device_id", strconv.Itoa(deviceId))
+	}
 	req := c.buildRequest("/pushes", data)
 	resp, err := c.Client.Do(req)
 	if err != nil {
@@ -120,6 +126,11 @@ func (c *Client) Push(deviceId int, data url.Values) error {
 	return nil
 }
 
+// PushToAll pushes the data to all of the user's Pushbullet devices.
+func (c *Client) PushToAll(data url.Values) error {
+	return c.Push(allDevicesId, data)
+}
+
 // PushNote pushes a note with title and body to a specific PushBullet device.
 func (c *Client) PushNote(deviceId int, title, body string) error {
 	data := url.Values{
@@ -128,6 +139,11 @@ func (c *Client) PushNote(deviceId int, title, body string) error {
 		"body":  {body},
 	}
 	return c.Push(deviceId, data)
+}
+
+// PushNoteToAll pushes a note with title and body to all of the user's Pushbullet devices.
+func (c *Client) PushNoteToAll(title, body string) error {
+	return c.PushNote(allDevicesId, title, body)
 }
 
 // PushAddress pushes a geo address with name and address to a specific PushBullet device.
@@ -140,6 +156,11 @@ func (c *Client) PushAddress(deviceId int, name, address string) error {
 	return c.Push(deviceId, data)
 }
 
+// PushAddressToAll pushes a geo address with name and address to all of the user's Pushbullet devices.
+func (c *Client) PushAddressToAll(name, address string) error {
+	return c.PushAddress(allDevicesId, name, address)
+}
+
 // PushList pushes a list with name and a slice of items to a specific PushBullet device.
 func (c *Client) PushList(deviceId int, title string, items []string) error {
 	data := url.Values{
@@ -150,6 +171,11 @@ func (c *Client) PushList(deviceId int, title string, items []string) error {
 	return c.Push(deviceId, data)
 }
 
+// PushListToAll pushes a list with name and a slice of items to all of the user's Pushbullet devices.
+func (c *Client) PushListToAll(title string, item []string) error {
+	return c.PushList(allDevicesId, title, item)
+}
+
 // PushLink pushes a link with a title and url to a specific PushBullet device.
 func (c *Client) PushLink(deviceId int, title, u string) error {
 	data := url.Values{
@@ -158,4 +184,9 @@ func (c *Client) PushLink(deviceId int, title, u string) error {
 		"url":   {u},
 	}
 	return c.Push(deviceId, data)
+}
+
+// PushLinkToAll pushes a link with a title and url to all of the user's Pushbullet devices.
+func (c *Client) PushLinkToAll(title, u string) error {
+	return c.PushLink(allDevicesId, title, u)
 }
